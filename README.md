@@ -1,4 +1,4 @@
-# EMBL Drosophila Course: Flight Assay
+# EMBO Drosophila Course: Flight Assay
 
 
 - [scripts/FlightAssay.ijm](scripts/FlightAssay.ijm) : ImageJ macro for flight assay

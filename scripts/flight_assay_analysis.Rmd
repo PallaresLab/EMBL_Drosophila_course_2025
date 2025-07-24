@@ -39,7 +39,10 @@ We recommend you use `Rstudio`.
 - Open `flight_assay_analysis.Rmd` in `Rstudio`.
 - Follow the instructions
 
-If you prefer other IDEs or base R console, you can copy-paste commands from the code blocks in `flight_assay_analysis.pdf` from <https://github.com/PallaresLab/EMBL_Drosophila_course_2025/blob/main/protocols/flight_assay_analysis.pdf> or `flight_assay_analysis.html` from <https://github.com/PallaresLab/EMBL_Drosophila_course_2025/blob/main/protocols/flight_assay_analysis.html>.
+Or
+
+- PDF: download from [here](https://raw.githubusercontent.com/PallaresLab/EMBL_Drosophila_course_2025/main/protocols/flight_assay_analysis.pdf)
+- HTML: access [here](https://junishigohoka.github.io/flight_assay_analysis.html)
 
 # Preparation
 

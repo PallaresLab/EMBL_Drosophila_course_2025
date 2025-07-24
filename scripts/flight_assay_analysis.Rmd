@@ -153,14 +153,15 @@ Do you expect normally distributed data from this experiment?
 ## Does your data have equal variance?
 
 Many parametric tests assume equal variance between groups.
-Brown-Forsythe test for homogeneity. If you have `car` installed
+Let's run Brown-Forsythe test for homogeneity. If you have `car` installed
 
 ```{r}
 leveneTest(Y ~ sex, d, center = median)
 
 ```
 
-If you do not have `car` installed, compute deviance from median for each sex manually, and run ANOVA.
+If you do not have `car` installed, you can run Brown-Forsythe test manually.
+Compute absolute deviance from median for each sex manually, and run ANOVA.
 
 ```{r}
 d$z <- NA
@@ -176,7 +177,7 @@ summary(aov(d$z ~ d$sex))
 
 ## Is the mean landing distance different between groups?
 
-If the data are normally distributed and have equal variance, Student t-test
+If the data are normally distributed and have equal variance, student t-test
 
 ```{r}
 t.test(d$Y ~ d$sex,
@@ -185,7 +186,7 @@ t.test(d$Y ~ d$sex,
        )
 ```
 
-If data are normal but not with equal variance, Welch's t-test
+If data are normally distributed but not with equal variance, Welch's t-test
 
 ```{r}
 
@@ -196,6 +197,7 @@ t.test(d$Y ~ d$sex,
 
 
 ```
+
 
 If data are not normally distributed, you can run non-parametric tests or permutation test.
 
@@ -220,22 +222,22 @@ We repeat this process many times to get a null distribution.
 We compute p-value based on the position of the observed difference between groups in the null distribution.
 
 ```{r}
-# Null distribution of mean(Y | female) - mean(Y | male)
+# Null distribution of abs(mean(Y | female) - mean(Y | male))
 null_dist <- sapply(1:1000, # repeat 1000 times
        function(x){
          d_tmp <- d
          d_tmp$sex <- sample(d$sex) # shuffle label
-         return(mean(d_tmp[d_tmp$sex == "female","Y"]) 
-                  - mean(d_tmp[d_tmp$sex == "male","Y"])
-                )
+         return(abs(mean(d_tmp[d_tmp$sex == "female","Y"]) 
+                  - mean(d_tmp[d_tmp$sex == "male","Y"]))
+           )
        }
        )
 
 # Observed value of mean(female) - mean(male)
-obs <- mean(d[d$sex == "female", "Y"] - d[d$sex == "male", "Y"])
+obs <- abs(mean(d[d$sex == "female", "Y"] - d[d$sex == "male", "Y"]))
 
 # p value as the rank of observation in the null distribution
-p_val <- sum(abs(null_dist) > abs(obs)) / length(null_dist)
+p_val <- sum(null_dist > obs )/ length(null_dist)
 
 hist(null_dist,
      main = paste("p_val: ", p_val))
@@ -300,7 +302,7 @@ summary(lm_1)
 ## GLM vs LM
 
 Compare the diagnostic plots[^1] between `glm_1` and `lm_1`.
-**Is using LM for landing distance data worse than exponential GLM?"
+**Is using LM for landing distance data worse than exponential GLM?**
 
 [^1]: What do the diagnostic plots mean? <https://www.sthda.com/english/articles/39-regression-model-diagnostics/161-linear-regression-assumptions-and-diagnostics-in-r-essentials/>
 
@@ -331,8 +333,5 @@ In real life, we have multiple biological and technical replicates.
 
 
 
-```{r}
-sessionInfo()
-```
 
 

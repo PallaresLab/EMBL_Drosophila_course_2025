@@ -1,5 +1,5 @@
 ---
-title: "Statistical Analysis of Flight Assay Data"
+title: "Statistical Analysis of Flight Assay Data in `R`"
 author: "Jun Ishigohoka"
 output: 
   pdf_document:
@@ -31,6 +31,15 @@ grid::grid.raster(img)
 \newpage
 \pagenumbering{arabic}
 
+# Environment
+
+We recommend you use `Rstudio`.
+
+- Download `flight_assay_analysis.Rmd` from <https://github.com/PallaresLab/EMBL_Drosophila_course_2025/blob/main/scripts/flight_assay_analysis.Rmd>, place it in the same directory as your flight assay data.
+- Open `flight_assay_analysis.Rmd` in `Rstudio`.
+- Follow the instructions
+
+If you prefer other IDEs or base R console, you can copy-paste commands from the code blocks in `flight_assay_analysis.pdf` from <https://github.com/PallaresLab/EMBL_Drosophila_course_2025/blob/main/protocols/flight_assay_analysis.pdf> or `flight_assay_analysis.html` from <https://github.com/PallaresLab/EMBL_Drosophila_course_2025/blob/main/protocols/flight_assay_analysis.html>.
 
 # Preparation
 
@@ -153,12 +162,26 @@ Do you expect normally distributed data from this experiment?
 ## Does your data have equal variance?
 
 Many parametric tests assume equal variance between groups.
-Let's run Brown-Forsythe test for homogeneity. If you have `car` installed
+
+Let's run two tests for homogeneity: F-test and Brown-Forsythe test.
+
+
+
+Run F-test.
+
+```{r}
+var.test(Y ~ sex, d)
+
+```
+
+
+Run Brown-Forsythe test (`car` needs to be installed).
 
 ```{r}
 leveneTest(Y ~ sex, d, center = median)
 
 ```
+
 
 If you do not have `car` installed, you can run Brown-Forsythe test manually.
 Compute absolute deviance from median for each sex manually, and run ANOVA.
@@ -332,6 +355,7 @@ In real life, we have multiple biological and technical replicates.
 
 
 
+# Further reading
 
-
-
+- Whitlock & Schluter. *The Analysis of Biological Data 3rd edition*. Macmillan Learning. 2020
+- Zuur et al. *Mixed Effects Models and Extensions in Ecology with R.* Springer. 2009.

@@ -1,0 +1,338 @@
+---
+title: "Statistical Analysis of Flight Assay Data"
+author: "Jun Ishigohoka"
+output: 
+  pdf_document:
+    highlight: tango
+fontsize: 12pt
+header-includes:
+ \usepackage{titling}
+linkcolor: blue
+urlcolor: blue
+
+---
+
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=F, message = F, class.source = "numberLines lineAnchors")
+knitr::opts_knit$set(root.dir = paste0(Sys.getenv("HOME"), "/Dropbox/work/conferences/2025/EMBO_Drosophila/prep/github/"))
+
+```
+
+\pagenumbering{gobble}
+
+```{r, echo = F, fig.align = "center"}
+img <- png::readPNG("pictures/cover.png")
+grid::grid.raster(img)
+```
+
+\newpage
+\pagenumbering{arabic}
+
+
+# Preparation
+
+If you don't have the packages, install them.
+
+```{r}
+packages <- c("ggplot2", "car")
+for (pkg in packages) {
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    install.packages(pkg)
+  }
+}
+
+```
+
+
+Load libraries.
+
+```{r}
+library(ggplot2)
+library(car) # Anova() and leveneTest()
+```
+
+Read data in two data frames.
+For this protocol, test data will be used.
+
+
+```{r}
+d_1 <- read.csv("data/test_data/R4_female.csv")
+d_2 <- read.csv("data/test_data/R4_male.csv")
+
+head(d_1)
+```
+
+Add a column for the factor you are comparing.
+
+```{r}
+d_1$sex <- "female"
+d_2$sex <- "male"
+```
+
+Concatenate the two data frames. Then set it as a factor.
+
+```{r}
+d <- rbind(d_1, d_2)
+d$sex <- factor(d$sex, levels = c("female", "male"))
+
+```
+
+# Visualisation
+
+Let's visualise the distribution of landing height.
+**Once you have visualised the distributions, try to describe them.**
+
+If you have `ggplot2`...
+
+```{r}
+ggplot(data = d, # data to be plotted
+       mapping = aes(x=sex, y=Y, fill = sex)) + # columns in the data frame to be used for plotting
+        geom_violin() +   # violin plot
+        geom_boxplot(     # box plot
+          width = 0.1,    # width of the box plot
+          fill = "white", # colour inside the box plot
+          outliers = F    # whether to have points for outliers. 
+                          # FALSE because of geom_fitter() below
+          ) +
+        geom_jitter(      # each data point with "jitter" along x axis
+          size = 0.5,     # size of points
+          width = 0.1     # the amount of jitter
+          ) + 
+        scale_y_reverse(  # to make the plot same direction as the tapes
+          limits = c(NA, 0) # so that the lowest Y is 0
+          ) +
+  labs(                   # Add labels
+    x = "Sex", 
+    y = "Landing position [mm]") +
+  theme_bw()
+
+```
+
+If you prefer the base plot or do not have `ggplot2` installed.
+
+```{r}
+boxplot(d$Y ~ as.factor(d$sex),
+     pch = NA,
+     xlab = "Sex",
+     ylab = "Landing position [mm]",
+     ylim = rev(range(d$Y))
+)
+points(jitter(as.numeric(as.factor(d$sex))), d$Y)
+
+```
+
+
+
+
+
+
+
+# Statistical analysis (hypothesis testing)
+
+## Are your data normally distributed?
+
+Many parametric tests assume normality.
+Let's run Shapiro-Wilk test for each group to test normality.
+
+```{r}
+shapiro.test(subset(d, sex == "female")$Y)
+shapiro.test(subset(d, sex == "male")$Y)
+```
+
+Does the result fit your description of the distributions?
+
+If they are not normally distributed, think why.
+Do you expect normally distributed data from this experiment?
+(Hints: Poisson process; waiting time)
+
+
+
+## Does your data have equal variance?
+
+Many parametric tests assume equal variance between groups.
+Brown-Forsythe test for homogeneity. If you have `car` installed
+
+```{r}
+leveneTest(Y ~ sex, d, center = median)
+
+```
+
+If you do not have `car` installed, compute deviance from median for each sex manually, and run ANOVA.
+
+```{r}
+d$z <- NA
+for (sex in levels(d$sex)) {
+  idx <- which(d$sex == sex)
+  d[idx,]$z <- abs(d[idx, ]$Y - median(d[idx, ]$Y))
+}
+
+summary(aov(d$z ~ d$sex))
+```
+
+
+
+## Is the mean landing distance different between groups?
+
+If the data are normally distributed and have equal variance, Student t-test
+
+```{r}
+t.test(d$Y ~ d$sex,
+       var.equal = T,
+       paired = F
+       )
+```
+
+If data are normal but not with equal variance, Welch's t-test
+
+```{r}
+
+t.test(d$Y ~ d$sex,
+       var.equal = F,
+       paired = F
+       )
+
+
+```
+
+If data are not normally distributed, you can run non-parametric tests or permutation test.
+
+
+**Option 1:** Non-parametric test
+
+Let's run Mann–Whitney U test.
+
+```{r}
+wilcox.test(d$Y ~ d$sex,
+            paired = F
+            )
+```
+
+
+
+**Option 2**: Permutation test
+
+Let's write a function to run a permutation test.
+Briefly, we shuffle the label, compute difference between groups.
+We repeat this process many times to get a null distribution.
+We compute p-value based on the position of the observed difference between groups in the null distribution.
+
+```{r}
+# Null distribution of mean(Y | female) - mean(Y | male)
+null_dist <- sapply(1:1000, # repeat 1000 times
+       function(x){
+         d_tmp <- d
+         d_tmp$sex <- sample(d$sex) # shuffle label
+         return(mean(d_tmp[d_tmp$sex == "female","Y"]) 
+                  - mean(d_tmp[d_tmp$sex == "male","Y"])
+                )
+       }
+       )
+
+# Observed value of mean(female) - mean(male)
+obs <- mean(d[d$sex == "female", "Y"] - d[d$sex == "male", "Y"])
+
+# p value as the rank of observation in the null distribution
+p_val <- sum(abs(null_dist) > abs(obs)) / length(null_dist)
+
+hist(null_dist,
+     main = paste("p_val: ", p_val))
+abline(v = obs, col = "red", lty = 2)
+```
+
+# Optional: Statistical modeling
+
+Here, we conduct statistical modeling of landing distance using a generalised linear model (GLM) approach with the exponential distribution, considering landing events as a Poisson process with a constant "landing rate".
+Because the waiting time of a Poisson process is an exponentially distributed random variable, we can use a GLM with exponential distribution.
+We compare the result with a linear model (LM), which assumes a normal distribution as the underlying distribution.
+
+## GLM
+
+
+Fit the data to an exponential GLM.
+
+```{r}
+glm_1 <- glm(Y ~ sex,
+             data = d, 
+             family = Gamma(link = "log") # This is how to specify exponential
+             )
+```
+
+**According to the fitted GLM, do the two groups have different landing rate?**
+
+If you have `car` installed
+
+```{r}
+Anova(glm_1)
+```
+
+```{r}
+summary(glm_1, dispersion = 1) # exponential is a Gamma with dispersion = 1
+```
+
+If you do not have `car` installed
+
+```{r}
+drop1(glm_1, test = "Chi")
+```
+
+## LM
+
+Fit the data to a linear model.
+
+```{r}
+lm_1 <- lm(Y ~ sex,
+             data = d)
+```
+
+If you do not have `car` installed
+
+```{r}
+drop1(lm_1, test = "Chi")
+```
+
+```{r}
+summary(lm_1)
+```
+
+## GLM vs LM
+
+Compare the diagnostic plots[^1] between `glm_1` and `lm_1`.
+**Is using LM for landing distance data worse than exponential GLM?"
+
+[^1]: What do the diagnostic plots mean? <https://www.sthda.com/english/articles/39-regression-model-diagnostics/161-linear-regression-assumptions-and-diagnostics-in-r-essentials/>
+
+-   Is the linearity assumption met?
+-   Is the data homoscedastic?
+-   Are residuals distributed normally?
+-   Are there outliers?
+
+```{r, fig.height = 7, fig.width = 7}
+par(mfrow = c(2,2),
+    oma = c(0, 0, 2, 0)
+    )
+plot(lm_1)
+```
+
+```{r, fig.height = 7, fig.width = 7}
+par(mfrow = c(2,2),
+    oma = c(0, 0, 2, 0)
+    )
+plot(glm_1)
+```
+
+## What's next?
+
+In real life, we have multiple biological and technical replicates.
+**How do we account for such random effects?**
+
+
+
+
+```{r}
+sessionInfo()
+```
+
+

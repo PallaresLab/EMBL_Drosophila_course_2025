@@ -9,15 +9,11 @@ header-includes:
  \usepackage{titling}
 linkcolor: blue
 urlcolor: blue
-
 ---
-
-
-
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning=F, message = F, class.source = "numberLines lineAnchors")
-knitr::opts_knit$set(root.dir = paste0(Sys.getenv("HOME"), "/Dropbox/work/conferences/2025/EMBO_Drosophila/prep/github/"))
+knitr::opts_knit$set(root.dir = "~/Dropbox/work/conferences/2025/EMBO_Drosophila/prep/github")
 
 ```
 
@@ -35,14 +31,14 @@ grid::grid.raster(img)
 
 We recommend you use `Rstudio`.
 
-- Download `flight_assay_analysis.Rmd` from <https://github.com/PallaresLab/EMBL_Drosophila_course_2025/blob/main/scripts/flight_assay_analysis.Rmd>, place it in the same directory as your flight assay data.
-- Open `flight_assay_analysis.Rmd` in `Rstudio`.
-- Follow the instructions
+-   Download `flight_assay_analysis.Rmd` from <https://github.com/PallaresLab/EMBL_Drosophila_course_2025/blob/main/scripts/flight_assay_analysis.Rmd>, place it in the same directory as your flight assay data.
+-   Open `flight_assay_analysis.Rmd` in `Rstudio`.
+-   Follow the instructions
 
 Or
 
-- PDF: download from [here](https://raw.githubusercontent.com/PallaresLab/EMBL_Drosophila_course_2025/main/protocols/flight_assay_analysis.pdf)
-- HTML: access [here](https://junishigohoka.github.io/flight_assay_analysis.html)
+-   PDF: download from [here](https://raw.githubusercontent.com/PallaresLab/EMBL_Drosophila_course_2025/main/protocols/flight_assay_analysis.pdf)
+-   HTML: access [here](https://junishigohoka.github.io/flight_assay_analysis.html)
 
 # Preparation
 
@@ -58,7 +54,6 @@ for (pkg in packages) {
 
 ```
 
-
 Load libraries.
 
 ```{r}
@@ -66,9 +61,7 @@ library(ggplot2)
 library(car) # Anova() and leveneTest()
 ```
 
-Read data in two data frames.
-For this protocol, test data will be used.
-
+Read data in two data frames. For this protocol, test data will be used.
 
 ```{r}
 d_1 <- read.csv("data/test_data/R4_female.csv")
@@ -94,8 +87,7 @@ d$sex <- factor(d$sex, levels = c("female", "male"))
 
 # Visualisation
 
-Let's visualise the distribution of landing height.
-**Once you have visualised the distributions, try to describe them.**
+Let's visualise the distribution of landing height. **Once you have visualised the distributions, try to describe them.**
 
 If you have `ggplot2`...
 
@@ -136,18 +128,11 @@ points(jitter(as.numeric(as.factor(d$sex))), d$Y)
 
 ```
 
-
-
-
-
-
-
 # Statistical analysis (hypothesis testing)
 
 ## Are your data normally distributed?
 
-Many parametric tests assume normality.
-Let's run Shapiro-Wilk test for each group to test normality.
+Many parametric tests assume normality. Let's run Shapiro-Wilk test for each group to test normality.
 
 ```{r}
 shapiro.test(subset(d, sex == "female")$Y)
@@ -156,19 +141,13 @@ shapiro.test(subset(d, sex == "male")$Y)
 
 Does the result fit your description of the distributions?
 
-If they are not normally distributed, think why.
-Do you expect normally distributed data from this experiment?
-(Hints: Poisson process; waiting time)
-
-
+If they are not normally distributed, think why. Do you expect normally distributed data from this experiment? (Hints: Poisson process; waiting time)
 
 ## Does your data have equal variance?
 
 Many parametric tests assume equal variance between groups.
 
 Let's run two tests for homogeneity: F-test and Brown-Forsythe test.
-
-
 
 Run F-test.
 
@@ -177,7 +156,6 @@ var.test(Y ~ sex, d)
 
 ```
 
-
 Run Brown-Forsythe test (`car` needs to be installed).
 
 ```{r}
@@ -185,9 +163,7 @@ leveneTest(Y ~ sex, d, center = median)
 
 ```
 
-
-If you do not have `car` installed, you can run Brown-Forsythe test manually.
-Compute absolute deviance from median for each sex manually, and run ANOVA.
+If you do not have `car` installed, you can run Brown-Forsythe test manually. Compute absolute deviance from median for each sex manually, and run ANOVA.
 
 ```{r}
 d$z <- NA
@@ -198,8 +174,6 @@ for (sex in levels(d$sex)) {
 
 summary(aov(d$z ~ d$sex))
 ```
-
-
 
 ## Is the mean landing distance different between groups?
 
@@ -224,9 +198,7 @@ t.test(d$Y ~ d$sex,
 
 ```
 
-
 If data are not normally distributed, you can run non-parametric tests or permutation test.
-
 
 **Option 1:** Non-parametric test
 
@@ -238,14 +210,9 @@ wilcox.test(d$Y ~ d$sex,
             )
 ```
 
-
-
 **Option 2**: Permutation test
 
-Let's write a function to run a permutation test.
-Briefly, we shuffle the label, compute difference between groups.
-We repeat this process many times to get a null distribution.
-We compute p-value based on the position of the observed difference between groups in the null distribution.
+Let's write a function to run a permutation test. Briefly, we shuffle the label, compute difference between groups. We repeat this process many times to get a null distribution. We compute p-value based on the position of the observed difference between groups in the null distribution.
 
 ```{r}
 # Null distribution of abs(mean(Y | female) - mean(Y | male))
@@ -272,12 +239,9 @@ abline(v = obs, col = "red", lty = 2)
 
 # Optional: Statistical modeling
 
-Here, we conduct statistical modeling of landing distance using a generalised linear model (GLM) approach with the exponential distribution, considering landing events as a Poisson process with a constant "landing rate".
-Because the waiting time of a Poisson process is an exponentially distributed random variable, we can use a GLM with exponential distribution.
-We compare the result with a linear model (LM), which assumes a normal distribution as the underlying distribution.
+Here, we conduct statistical modeling of landing distance using a generalised linear model (GLM) approach with the exponential distribution, considering landing events as a Poisson process with a constant "landing rate". Because the waiting time of a Poisson process is an exponentially distributed random variable, we can use a GLM with exponential distribution. We compare the result with a linear model (LM), which assumes a normal distribution as the underlying distribution.
 
 ## GLM
-
 
 Fit the data to an exponential GLM.
 
@@ -327,8 +291,7 @@ summary(lm_1)
 
 ## GLM vs LM
 
-Compare the diagnostic plots[^1] between `glm_1` and `lm_1`.
-**Is using LM for landing distance data worse than exponential GLM?**
+Compare the diagnostic plots[^1] between `glm_1` and `lm_1`. **Is using LM for landing distance data worse than exponential GLM?**
 
 [^1]: What do the diagnostic plots mean? <https://www.sthda.com/english/articles/39-regression-model-diagnostics/161-linear-regression-assumptions-and-diagnostics-in-r-essentials/>
 
@@ -353,12 +316,9 @@ plot(glm_1)
 
 ## What's next?
 
-In real life, we have multiple biological and technical replicates.
-**How do we account for such random effects?**
-
-
+In real life, we have multiple biological and technical replicates. **How do we account for such random effects?**
 
 # Further reading
 
-- Whitlock & Schluter. *The Analysis of Biological Data 3rd edition*. Macmillan Learning. 2020
-- Zuur et al. *Mixed Effects Models and Extensions in Ecology with R.* Springer. 2009.
+-   Whitlock & Schluter. *The Analysis of Biological Data 3rd edition*. Macmillan Learning. 2020
+-   Zuur et al. *Mixed Effects Models and Extensions in Ecology with R.* Springer. 2009.

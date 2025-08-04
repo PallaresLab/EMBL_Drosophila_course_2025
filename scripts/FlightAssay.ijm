@@ -1,5 +1,7 @@
 // This macro is meant to help your flight assay measurement.
 
+run("Set Measurements...");
+
 
 // Step 1: Prompt user to choose a file
 path = File.openDialog("Select a clipped image file");

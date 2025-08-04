@@ -35,6 +35,12 @@ waitForUser("Draw a straight line with the Line tool to set the scale, then clic
 run("Set Scale...");
 run("Select None");
 
+
+getPixelSize(unit, pixelWidth, pixelHeight);
+
+
+
+
 // Step 5: Adjust brightness
 run("Brightness/Contrast...");
 waitForUser("Adjust brightness/contrast, click Apply, close the Brightness/Contrast window, then click OK here to continue.");
@@ -57,7 +63,12 @@ run("Close All");
 
 open(path);
 open(roiPath);
+run("Set Scale...", "distance=1 known=" + pixelWidth + " unit=" + unit);
+run("Select None");
 
+// Step 3: Ask user to draw a line for scale
+
+//waitForUser("Draw a straight line with the Line tool to set the scale, then click OK.");
 
 waitForUser("In the ROI manager, tick 'Lables'. By clicking 'Show All', you can toggle labels in the image viewer. You can manually add/remove ROIs, then make a measurement.");
 

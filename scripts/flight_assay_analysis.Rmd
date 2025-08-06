@@ -1,12 +1,13 @@
 ---
 title: "Statistical Analysis of Flight Assay Data in `R`"
 author: "Jun Ishigohoka"
-output: 
+output:
+  html_document:
+    df_print: paged
   pdf_document:
     highlight: tango
 fontsize: 12pt
-header-includes:
- \usepackage{titling}
+header-includes: \usepackage{titling}
 linkcolor: blue
 urlcolor: blue
 ---
@@ -61,7 +62,9 @@ library(ggplot2)
 library(car) # Anova() and leveneTest()
 ```
 
-Read data in two data frames. For this protocol, test data will be used.
+Read data in two data frames. 
+
+**Edit the file names accordingly**.
 
 ```{r}
 d_1 <- read.csv("data/test_data/R4_female.csv")
@@ -72,12 +75,41 @@ head(d_1)
 
 Add a column for the factor you are comparing.
 
+**Edit the name of factor (sex) and each level of factor (female/male) accordingly**.
+
 ```{r}
+
 d_1$sex <- "female"
 d_2$sex <- "male"
+
 ```
 
+
+What are the mean and standard deviation of landing height in each group?
+
+```{r}
+mean(d_1$Y)
+```
+```{r}
+sd(d_1$Y)
+```
+
+```{r}
+mean(d_2$Y)
+
+```
+
+```{r}
+sd(d_2$Y)
+
+```
+
+
+Let's make these two data frame together.
 Concatenate the two data frames. Then set it as a factor.
+
+
+**Edit the name of factor (sex) and each level of the factor (female/male) accordingly**.
 
 ```{r}
 d <- rbind(d_1, d_2)
@@ -85,11 +117,24 @@ d$sex <- factor(d$sex, levels = c("female", "male"))
 
 ```
 
+
+
+
+
+
+
+
 # Visualisation
 
 Let's visualise the distribution of landing height. **Once you have visualised the distributions, try to describe them.**
 
+
+
+
 If you have `ggplot2`...
+
+(**Edit the name of factor (sex), each level of the factor (female/male), and unit (mm) accordingly**.)
+
 
 ```{r}
 ggplot(data = d, # data to be plotted
@@ -115,7 +160,9 @@ ggplot(data = d, # data to be plotted
 
 ```
 
-If you prefer the base plot or do not have `ggplot2` installed.
+If you prefer the base plot or do not have `ggplot2` installed....
+
+(**Edit the name of factor (sex), each level of the factor (female/male), and unit (mm) accordingly**.)
 
 ```{r}
 boxplot(d$Y ~ as.factor(d$sex),
@@ -134,14 +181,19 @@ points(jitter(as.numeric(as.factor(d$sex))), d$Y)
 
 Many parametric tests assume normality. Let's run Shapiro-Wilk test for each group to test normality.
 
+
+**Edit the name of factor (sex), each level of the factor (female/male) accordingly**.
+
+
 ```{r}
 shapiro.test(subset(d, sex == "female")$Y)
 shapiro.test(subset(d, sex == "male")$Y)
 ```
 
 Does the result fit your description of the distributions?
+If they are not normally distributed, think why. Do you expect normally distributed data from this experiment?
 
-If they are not normally distributed, think why. Do you expect normally distributed data from this experiment? (Hints: Poisson process; waiting time)
+
 
 ## Does your data have equal variance?
 
@@ -151,6 +203,8 @@ Let's run two tests for homogeneity: F-test and Brown-Forsythe test.
 
 Run F-test.
 
+**Edit the name of factor (sex) accordingly**.
+
 ```{r}
 var.test(Y ~ sex, d)
 
@@ -158,12 +212,18 @@ var.test(Y ~ sex, d)
 
 Run Brown-Forsythe test (`car` needs to be installed).
 
+**Edit the name of factor (sex) accordingly**.
+
 ```{r}
 leveneTest(Y ~ sex, d, center = median)
 
 ```
 
 If you do not have `car` installed, you can run Brown-Forsythe test manually. Compute absolute deviance from median for each sex manually, and run ANOVA.
+
+
+**Edit the name of factor (sex) accordingly**.
+
 
 ```{r}
 d$z <- NA
@@ -188,6 +248,8 @@ t.test(d$Y ~ d$sex,
 
 If data are normally distributed but not with equal variance, Welch's t-test
 
+**Edit the name of factor (sex) accordingly**.
+
 ```{r}
 
 t.test(d$Y ~ d$sex,
@@ -204,6 +266,10 @@ If data are not normally distributed, you can run non-parametric tests or permut
 
 Let's run Mann–Whitney U test.
 
+
+**Edit the name of factor (sex) accordingly**.
+
+
 ```{r}
 wilcox.test(d$Y ~ d$sex,
             paired = F
@@ -213,6 +279,10 @@ wilcox.test(d$Y ~ d$sex,
 **Option 2**: Permutation test
 
 Let's write a function to run a permutation test. Briefly, we shuffle the label, compute difference between groups. We repeat this process many times to get a null distribution. We compute p-value based on the position of the observed difference between groups in the null distribution.
+
+
+**Edit the name of factor (sex) and each level of the factor (female/male) accordingly**.
+
 
 ```{r}
 # Null distribution of abs(mean(Y | female) - mean(Y | male))
@@ -245,6 +315,8 @@ Here, we conduct statistical modeling of landing distance using a generalised li
 
 Fit the data to an exponential GLM.
 
+**Edit the name of factor (sex) accordingly**.
+
 ```{r}
 glm_1 <- glm(Y ~ sex,
              data = d, 
@@ -273,6 +345,8 @@ drop1(glm_1, test = "Chi")
 ## LM
 
 Fit the data to a linear model.
+
+**Edit the name of factor (sex) accordingly**.
 
 ```{r}
 lm_1 <- lm(Y ~ sex,
